@@ -8,7 +8,7 @@ import { FetchImages } from './lib/FetchImages';
 
 dotenv.config();
 
-const PORT = 5050;
+const PORT: number = 5050;
 const BaseURL = `http://localhost:${PORT}/`;
 const apiKey = process.env.WALLHAVEN_API_KEY || '';
 
@@ -32,21 +32,20 @@ app.use(
   morgan(':method :url :status :res[content-length] - :response-time ms')
 );
 
-const url = new URL('https://wallhaven.cc/api/v1/search');
-url.searchParams.set('apikey', apiKey);
-url.searchParams.set('categories', '010');
-url.searchParams.set('purity', '011');
-url.searchParams.set('resolution', '1920x1080');
-url.searchParams.set('sorting', 'random');
-
-const fetchImages = new FetchImages(url.toString());
+const fetchImages = new FetchImages({
+  apiKey,
+  categories: [0, 1, 0],
+  purity: [0, 1, 1],
+  sorting: 0,
+  resolution: '1920x1080'
+});
 
 app.get('/feed/rss', (req, res) => {
   fetchImages.fetchCurrent().then(() => {
     const currentPage = fetchImages.results.meta.current_page;
     fetchImages.results.data.forEach((entry, index) => {
       feed.addItem({
-        title: `Image-${currentPage}-index`,
+        title: `Image-${currentPage}-${index}`,
         link: entry.short_url,
         date: new Date(entry.created_at),
         extensions: [
@@ -74,7 +73,7 @@ app.get('/feed/rss', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.send('hi there');
+  res.send('updated Jun 22, 2019 9:30am');
 });
 
 http.createServer(app).listen(PORT, 'localhost', () => {
